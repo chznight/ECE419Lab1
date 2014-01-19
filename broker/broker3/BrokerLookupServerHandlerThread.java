@@ -30,7 +30,7 @@ public class BrokerLookupServerHandlerThread extends Thread {
 				BrokerPacket packetToClient = new BrokerPacket();
 				
 				/* process request */
-				
+				int flag=0; /*success=1, fail=0*/
 				/* If you want to register */
 				if(packetFromClient.type == BrokerPacket.LOOKUP_REGISTER) { 
 					for(int i=0;i<2;i++){
@@ -39,35 +39,44 @@ public class BrokerLookupServerHandlerThread extends Thread {
 							BrokerLookupTable[i].broker_location=packetFromClient.locations[0]; /*store location into table*/
 							packetToClient.type = BrokerPacket.LOOKUP_REPLY;
 							toClient.writeObject(packetToClient);
-							continue;							
+							flag=1;
+							break;
 						}
 						if(BrokerLookupTable[i].broker_name==packetFromClient.symbol){/*name already exists*/
-							packetToClient.error_code=BrokerPacket.ERROR_SYMBOL_EXISTS;
-							packetToClient.type = BrokerPacket.BROKER_ERROR;
+							packetToClient.type = BrokerPacket.LOOKUP_REPLY;
 							toClient.writeObject(packetToClient);
-							continue;													
+							flag=1;
+							break;											
 						}
 					}
 					/*DANGER: assuming only 2 brokers, if exceed 2, name will not get registered*/
-					packetToClient.type = BrokerPacket.BROKER_ERROR;
-					toClient.writeObject(packetToClient);
-					continue;							
+					if(flag){
+						continue;
+					}else{
+						/*idk what i should do here yet (This is when # of brokers > 2)*/
+						continue;												
+					}
 				}
 				
 				/* If you want to request lookup */
 				if(packetFromClient.type == BrokerPacket.LOOKUP_REQUEST) {
 					for(int i=0;i<2;i++){
 						if(BrokerLookupTable[i].broker_name==packetFromClient.symbol){ /*if there is a match*/
-							packetFromClient.locations[0]=BrokerLookupTable[i].broker_location; /*tell client the location*/
+							packetToClient.locations[0]=BrokerLookupTable[i].broker_location; /*tell client the location*/
 							packetToClient.type = BrokerPacket.LOOKUP_REPLY;
 							toClient.writeObject(packetToClient);
-							continue;							
+							flag=1;
+							break;
 						}
 					}
-					packetToClient.error_code=BrokerPacket.ERROR_INVALID_SYMBOL;
-					packetToClient.type = BrokerPacket.BROKER_ERROR;					
-					toClient.writeObject(packetToClient);
-					continue;
+					if(flag){
+						continue;
+					}else{
+						packetToClient.error_code=BrokerPacket.ERROR_INVALID_SYMBOL;
+						packetToClient.type = BrokerPacket.BROKER_ERROR;					
+						toClient.writeObject(packetToClient);
+						continue;
+					}
 				}
 				
 				/* Sending an ECHO_NULL || ECHO_BYE means quit */
