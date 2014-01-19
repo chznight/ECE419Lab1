@@ -30,7 +30,7 @@ public class BrokerLookupServerHandlerThread extends Thread {
 				BrokerPacket packetToClient = new BrokerPacket();
 				
 				/* process request */
-				int flag=0; /*success=1, fail=0*/
+				boolean flag=false;
 				/* If you want to register */
 				if(packetFromClient.type == BrokerPacket.LOOKUP_REGISTER) { 
 					for(int i=0;i<2;i++){
@@ -39,13 +39,13 @@ public class BrokerLookupServerHandlerThread extends Thread {
 							BrokerLookupTable[i].broker_location=packetFromClient.locations[0]; /*store location into table*/
 							packetToClient.type = BrokerPacket.LOOKUP_REPLY;
 							toClient.writeObject(packetToClient);
-							flag=1;
+							flag=true;
 							break;
 						}
 						if(BrokerLookupTable[i].broker_name==packetFromClient.symbol){/*name already exists*/
 							packetToClient.type = BrokerPacket.LOOKUP_REPLY;
 							toClient.writeObject(packetToClient);
-							flag=1;
+							flag=true;
 							break;											
 						}
 					}
@@ -65,7 +65,7 @@ public class BrokerLookupServerHandlerThread extends Thread {
 							packetToClient.locations[0]=BrokerLookupTable[i].broker_location; /*tell client the location*/
 							packetToClient.type = BrokerPacket.LOOKUP_REPLY;
 							toClient.writeObject(packetToClient);
-							flag=1;
+							flag=true;
 							break;
 						}
 					}
