@@ -46,21 +46,36 @@ public class BrokerExchange {
 			tokens = userInput.split(" ");
 
 			if (tokens[0].toLowerCase().equals ("add")) {
+				if (tokens.length != 2) {
+					System.out.println ("Invalid arguments, re-try");
+					System.out.print(">");
+					continue;
+				}
 				packetToServer.type = BrokerPacket.EXCHANGE_ADD;
 				packetToServer.symbol = tokens[1];
-				if (tokens[2] != null) {
-					packetToServer.quote = Long.parseLong(tokens[2]);
-				}
+
 			} else if (tokens[0].toLowerCase().equals ("remove")) {
+				if (tokens.length != 2) {
+					System.out.println ("Invalid arguments, re-try");
+					System.out.print(">");
+					continue;
+				}
 				packetToServer.type = BrokerPacket.EXCHANGE_REMOVE;
 				packetToServer.symbol = tokens[1];
 
 			} else if (tokens[0].toLowerCase().equals ("update")) {
+				if (tokens.length != 3) {
+					System.out.println ("Invalid arguments, re-try");
+					System.out.print(">");
+					continue;
+				}
 				packetToServer.type = BrokerPacket.EXCHANGE_UPDATE;
 				packetToServer.symbol = tokens[1];
 				packetToServer.quote = Long.parseLong(tokens[2]);
+
 			} else {
 				System.out.println ("ERROR: Command not recognized, retry.");
+				System.out.print(">");
 				continue;
 			}
 			/* make a new request packet */
