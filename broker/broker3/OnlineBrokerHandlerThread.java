@@ -9,12 +9,17 @@ import java.util.*;
 
 public class OnlineBrokerHandlerThread extends Thread {
 	private Socket socket = null;
-
-	private HashMap<String, Long> BrokerTable;
-	public OnlineBrokerHandlerThread(Socket socket, HashMap<String, Long> BrokerTable_) {
+	private String broker_name; //The name of this broker: nasdaq or tse
+    private String lookup_name; //Hostname of the naming service
+    private int lookup_port;	//Port of the naming service
+	private HashMap<String, Long> brokerTable;
+	public OnlineBrokerHandlerThread(Socket socket, HashMap<String, Long> brokerTable_, String broker_name_, String lookup_name_, int lookup_port_) {
 		super("EchoServerHandlerThread");
 		this.socket = socket;
-		BrokerTable = BrokerTable_;
+		brokerTable = brokerTable_;
+		broker_name = broker_name_;
+		lookup_name = lookup_name_;
+		lookup_port = lookup_port_;
 		System.out.println("Created new Thread to handle client");
 	}
 
@@ -34,11 +39,11 @@ public class OnlineBrokerHandlerThread extends Thread {
 
 				if (num_of_edits >= 3) {
 				//If the hashmap has been modified more than three times, then we update the file in hard disk
-					synchronized (BrokerTable) {
-						File newFile = new File ("nasdaq");
+					synchronized (brokerTable) {
+						File newFile = new File (broker_name);
 				        FileWriter fileW = new FileWriter(newFile);
 				        BufferedWriter buffW = new BufferedWriter (fileW);
-				        for (Map.Entry<String, Long> entry : BrokerTable.entrySet()) {
+				        for (Map.Entry<String, Long> entry : brokerTable.entrySet()) {
 							buffW.write(entry.getKey() + " " + entry.getValue() + "\n");
 						}
 				        buffW.close();
@@ -52,8 +57,8 @@ public class OnlineBrokerHandlerThread extends Thread {
 				
 				if(packetFromClient.type == BrokerPacket.BROKER_REQUEST) {
 					Long quote;
-					synchronized (BrokerTable) {
-						quote = BrokerTable.get(packetFromClient.symbol.toLowerCase());
+					synchronized (brokerTable) {
+						quote = brokerTable.get(packetFromClient.symbol.toLowerCase());
 					}
 					packetToClient.symbol = packetFromClient.symbol;
 					if (quote == null) {
@@ -69,13 +74,13 @@ public class OnlineBrokerHandlerThread extends Thread {
 					continue;
 				} else if (packetFromClient.type == BrokerPacket.EXCHANGE_ADD) {
 					packetToClient.symbol = packetFromClient.symbol;
-					synchronized (BrokerTable){
-						if (BrokerTable.containsKey(packetFromClient.symbol.toLowerCase())) {
+					synchronized (brokerTable){
+						if (brokerTable.containsKey(packetFromClient.symbol.toLowerCase())) {
 							packetToClient.type = BrokerPacket.BROKER_ERROR;
 							packetToClient.error_code = BrokerPacket.ERROR_SYMBOL_EXISTS;
 
 						} else {
-							BrokerTable.put (packetFromClient.symbol.toLowerCase(), Long.valueOf(0));
+							brokerTable.put (packetFromClient.symbol.toLowerCase(), Long.valueOf(0));
 							packetToClient.type = BrokerPacket.EXCHANGE_ADD;
 							num_of_edits++;
 						}
@@ -86,8 +91,8 @@ public class OnlineBrokerHandlerThread extends Thread {
 					continue;
 				} else if (packetFromClient.type == BrokerPacket.EXCHANGE_REMOVE) {
 					packetToClient.symbol = packetFromClient.symbol;
-					synchronized (BrokerTable) {
-						if (BrokerTable.remove (packetFromClient.symbol.toLowerCase()) == null) {
+					synchronized (brokerTable) {
+						if (brokerTable.remove (packetFromClient.symbol.toLowerCase()) == null) {
 							packetToClient.type = BrokerPacket.BROKER_ERROR;
 							packetToClient.error_code = BrokerPacket.ERROR_INVALID_SYMBOL;
 						} else {
@@ -101,8 +106,8 @@ public class OnlineBrokerHandlerThread extends Thread {
 					continue;
 				} else if (packetFromClient.type == BrokerPacket.EXCHANGE_UPDATE) {
 					packetToClient.symbol = packetFromClient.symbol;
-					synchronized (BrokerTable) {
-						if ((BrokerTable.containsKey(packetFromClient.symbol.toLowerCase())) == false) {
+					synchronized (brokerTable) {
+						if ((brokerTable.containsKey(packetFromClient.symbol.toLowerCase())) == false) {
 							packetToClient.type = BrokerPacket.BROKER_ERROR;
 							packetToClient.error_code = BrokerPacket.ERROR_INVALID_SYMBOL;
 						} else if (packetFromClient.quote.intValue() < 1 || packetFromClient.quote.intValue() > 300){
@@ -110,7 +115,7 @@ public class OnlineBrokerHandlerThread extends Thread {
 							packetToClient.error_code = BrokerPacket.ERROR_OUT_OF_RANGE;
 						} else {
 							packetToClient.type = BrokerPacket.EXCHANGE_UPDATE;
-							BrokerTable.put (packetFromClient.symbol.toLowerCase(), packetFromClient.quote);
+							brokerTable.put (packetFromClient.symbol.toLowerCase(), packetFromClient.quote);
 							packetToClient.quote = packetFromClient.quote;
 							num_of_edits++;
 						}
