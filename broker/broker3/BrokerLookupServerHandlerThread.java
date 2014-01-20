@@ -34,7 +34,7 @@ public class BrokerLookupServerHandlerThread extends Thread {
 				/* If you want to register */
 				if(packetFromClient.type == BrokerPacket.LOOKUP_REGISTER) { 
 					for(int i=0;i<2;i++){
-						if(BrokerLookupTable[i].broker_name==""){ /*found empty slot*/
+						if("".equals(BrokerLookupTable[i].broker_name)){ /*found empty slot*/
 							BrokerLookupTable[i].broker_name=packetFromClient.symbol; /*store name into table*/
 							BrokerLookupTable[i].broker_location=packetFromClient.locations[0]; /*store location into table*/
 							packetToClient.type = BrokerPacket.LOOKUP_REPLY;

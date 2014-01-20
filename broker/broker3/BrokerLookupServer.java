@@ -18,9 +18,13 @@ class LookupTable implements Serializable {
 
 public class BrokerLookupServer {
     public static void main(String[] args) throws IOException {
+        int num_of_brokers = 2;
         ServerSocket serverSocket = null;
         boolean listening = true;
-        LookupTable[] BrokerLookupTable=new LookupTable[2]; /*Created a lookup table here*/
+        LookupTable[] BrokerLookupTable = new LookupTable[num_of_brokers]; /*Created a lookup table here*/
+        for (int i = 0; i < num_of_brokers; i++) {
+            BrokerLookupTable[i] = new LookupTable();
+        }
         
         try {
         	if(args.length == 1) {
