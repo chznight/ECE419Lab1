@@ -26,13 +26,15 @@ public class BrokerLookupServerHandlerThread extends Thread {
 			ObjectOutputStream toClient = new ObjectOutputStream(socket.getOutputStream());
 			
 			while (( packetFromClient = (BrokerPacket) fromClient.readObject()) != null) {
+				System.out.println("I got "+packetFromClient.type+" from client");
 				/* create a packet to send reply back to client */
 				BrokerPacket packetToClient = new BrokerPacket();
+				packetToClient.locations=new BrokerLocation[1];
 				
 				/* process request */
 				boolean flag=false;
 				/* If you want to register */
-				if(packetFromClient.type == BrokerPacket.LOOKUP_REGISTER) { 
+				if(packetFromClient.type == BrokerPacket.LOOKUP_REGISTER) {
 					for(int i=0;i<2;i++){
 						if("".equals(BrokerLookupTable[i].broker_name)){ /*found empty slot*/
 							BrokerLookupTable[i].broker_name=packetFromClient.symbol; /*store name into table*/
@@ -50,7 +52,7 @@ public class BrokerLookupServerHandlerThread extends Thread {
 						}
 					}
 					/*DANGER: assuming only 2 brokers, if exceed 2, name will not get registered*/
-					if(flag){
+					if(flag==true){
 						continue;
 					}else{
 						/*idk what i should do here yet (This is when # of brokers > 2)*/
@@ -60,16 +62,18 @@ public class BrokerLookupServerHandlerThread extends Thread {
 				
 				/* If you want to request lookup */
 				if(packetFromClient.type == BrokerPacket.LOOKUP_REQUEST) {
+					System.out.println("You are in request");
 					for(int i=0;i<2;i++){
-						if(BrokerLookupTable[i].broker_name==packetFromClient.symbol){ /*if there is a match*/
+						if(BrokerLookupTable[i].broker_name.equals(packetFromClient.symbol)){ /*if there is a match*/
 							packetToClient.locations[0]=BrokerLookupTable[i].broker_location; /*tell client the location*/
 							packetToClient.type = BrokerPacket.LOOKUP_REPLY;
 							toClient.writeObject(packetToClient);
 							flag=true;
+							System.out.println("flag turned true");
 							break;
 						}
 					}
-					if(flag){
+					if(flag==true){
 						continue;
 					}else{
 						packetToClient.error_code=BrokerPacket.ERROR_INVALID_SYMBOL;

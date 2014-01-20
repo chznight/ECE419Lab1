@@ -41,6 +41,7 @@ public class BrokerExchange {
 		BrokerPacket packetFromServer;
 		packetFromServer = (BrokerPacket) in.readObject();
 		if (packetFromServer.type == BrokerPacket.LOOKUP_REPLY) {
+			System.out.println ("GOT REPLY");
 			hostname=packetFromServer.locations[0].broker_host;
 			port=packetFromServer.locations[0].broker_port;
 		}else{
@@ -49,6 +50,7 @@ public class BrokerExchange {
 		}
 		
 		/*tear down naming server*/
+		packetToServer=new BrokerPacket();
 		packetToServer.type = BrokerPacket.BROKER_BYE;
 		out.writeObject(packetToServer);
 
@@ -61,7 +63,7 @@ public class BrokerExchange {
 		}
 		
 		/*set up new socket and io stream*/
-		//BrokerSocket=new Socket(hostname, port);
+		BrokerSocket=new Socket(hostname, port);
 		out = new ObjectOutputStream(BrokerSocket.getOutputStream());
 		in = new ObjectInputStream(BrokerSocket.getInputStream());
 
