@@ -40,9 +40,15 @@ public class BrokerClient {
 			tokens = userInput.split(" ");
 			if (tokens[0].toLowerCase().equals ("local")) {
 				try {
-					LookupSocket = new Socket(hostname, port);
-					lookup_out = new ObjectOutputStream(LookupSocket.getOutputStream());
-					lookup_in = new ObjectInputStream(LookupSocket.getInputStream());
+					if (connected_to_broker == true) {
+						out.close();
+						in.close();
+						BrokerSocket.close();
+						connected_to_broker = false;
+					}
+					BrokerSocket = new Socket(hostname, port);
+					out = new ObjectOutputStream(BrokerSocket.getOutputStream());
+					in = new ObjectInputStream(BrokerSocket.getInputStream());
 				} catch (UnknownHostException e) {
 					System.err.println("ERROR: Don't know where to connect!!");
 					System.exit(1);
@@ -51,41 +57,39 @@ public class BrokerClient {
 					System.exit(1);
 				}
 				packetToServer.type = BrokerPacket.LOOKUP_REQUEST;
-				packetToServer.symbol = args[1];
-				lookup_out.writeObject(packetToServer);
-				packetFromServer = (BrokerPacket) lookup_in.readObject();
+				packetToServer.symbol = tokens[1];
 			} else {
-				packetToServer.type = BrokerPacket.BROKER_REQUEST;
-				packetToServer.symbol = userInput;
 				if (connected_to_broker == false) {
 					System.out.println ("Not connected to broker");
 					System.out.print(">");
 					continue;
 				}
-				out.writeObject(packetToServer);
-				packetFromServer = (BrokerPacket) in.readObject();
+				packetToServer.type = BrokerPacket.BROKER_REQUEST;
+				packetToServer.symbol = userInput;
 			}
-
+			out.writeObject(packetToServer);
+			packetFromServer = (BrokerPacket) in.readObject();
 
 			if (packetFromServer.type == BrokerPacket.BROKER_QUOTE) {
 				System.out.println("Quote from broker: " + packetFromServer.quote);
 			} else if (packetFromServer.type == BrokerPacket.LOOKUP_REPLY) {
-				if (connected_to_broker == true) {
-					out.close();
-					in.close();
-					BrokerSocket.close();
-				}
+				out.close();
+				in.close();
+				BrokerSocket.close();
 				BrokerSocket = new Socket(packetFromServer.locations[0].broker_host, packetFromServer.locations[0].broker_port);
 				out = new ObjectOutputStream(BrokerSocket.getOutputStream());
 				in = new ObjectInputStream(BrokerSocket.getInputStream());
 				connected_to_broker = true;
-				lookup_out.close();
-				lookup_in.close();
-				LookupSocket.close();
 				System.out.println (args[1] + " as local");
 			} else if (packetFromServer.type == BrokerPacket.BROKER_ERROR) {
 				if (packetFromServer.error_code == BrokerPacket.ERROR_INVALID_SYMBOL) {
 					System.out.println (packetFromServer.symbol + " invalid");
+				}
+				if (packetFromServer.error_code == BrokerPacket.ERROR_INVALID_EXCHANGE) {
+					out.close();
+					in.close();
+					BrokerSocket.close();
+					System.out.println (packetFromServer.symbol + " invalid, can not find broker");
 				}
 			} else {
 				System.out.println ("ERROR: PACKET NOT RECOGNIZED");
@@ -96,13 +100,17 @@ public class BrokerClient {
 		}
 
 		/* tell server that i'm quitting */
-		BrokerPacket packetToServer = new BrokerPacket();
-		packetToServer.type = BrokerPacket.BROKER_BYE;
-		out.writeObject(packetToServer);
+		
+		if (connected_to_broker == true) {
+			BrokerPacket packetToServer = new BrokerPacket();
+			packetToServer.type = BrokerPacket.BROKER_BYE;
+			out.writeObject(packetToServer);
 
-		out.close();
-		in.close();
-		stdIn.close();
-		BrokerSocket.close();
+			out.close();
+			in.close();
+			stdIn.close();
+			BrokerSocket.close();	
+		}
+
 	}
 }
