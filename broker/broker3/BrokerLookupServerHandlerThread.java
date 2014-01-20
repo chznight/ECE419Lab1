@@ -30,7 +30,7 @@ public class BrokerLookupServerHandlerThread extends Thread {
 				/* create a packet to send reply back to client */
 				BrokerPacket packetToClient = new BrokerPacket();
 				packetToClient.locations=new BrokerLocation[1];
-				
+				packetToClient.symbol = packetFromClient.symbol;
 				/* process request */
 				boolean flag=false;
 				/* If you want to register */
@@ -44,7 +44,8 @@ public class BrokerLookupServerHandlerThread extends Thread {
 							flag=true;
 							break;
 						}
-						if(BrokerLookupTable[i].broker_name==packetFromClient.symbol){/*name already exists*/
+						if(BrokerLookupTable[i].broker_name==packetFromClient.symbol){/*name already exists, register using new location*/ 
+							BrokerLookupTable[i].broker_location=packetFromClient.locations[0];
 							packetToClient.type = BrokerPacket.LOOKUP_REPLY;
 							toClient.writeObject(packetToClient);
 							flag=true;
@@ -62,14 +63,14 @@ public class BrokerLookupServerHandlerThread extends Thread {
 				
 				/* If you want to request lookup */
 				if(packetFromClient.type == BrokerPacket.LOOKUP_REQUEST) {
-					System.out.println("You are in request");
+					//System.out.println("You are in request");
 					for(int i=0;i<2;i++){
 						if(BrokerLookupTable[i].broker_name.equals(packetFromClient.symbol)){ /*if there is a match*/
 							packetToClient.locations[0]=BrokerLookupTable[i].broker_location; /*tell client the location*/
 							packetToClient.type = BrokerPacket.LOOKUP_REPLY;
 							toClient.writeObject(packetToClient);
 							flag=true;
-							System.out.println("flag turned true");
+							//System.out.println("flag turned true");
 							break;
 						}
 					}
@@ -85,6 +86,9 @@ public class BrokerLookupServerHandlerThread extends Thread {
 				
 				/* Sending an ECHO_NULL || ECHO_BYE means quit */
 				if (packetFromClient.type == BrokerPacket.BROKER_BYE || packetFromClient.type == BrokerPacket.BROKER_NULL) {
+					//packetToClient.type = BrokerPacket.BROKER_NULL;
+					//toClient.writeObject(packetToClient);
+					System.out.println ("Naming server thread exiting");
 					gotByePacket = true;
 					break;
 				}

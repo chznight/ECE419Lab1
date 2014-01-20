@@ -36,7 +36,7 @@ public class OnlineBrokerHandlerThread extends Thread {
 			ObjectOutputStream toClient = new ObjectOutputStream(socket.getOutputStream());
 
 			while (( packetFromClient = (BrokerPacket) fromClient.readObject()) != null) {
-				System.out.println("I got "+packetFromClient.type+" from client");
+
 				if (num_of_edits >= 3) {
 				//If the hashmap has been modified more than three times, then we update the file in hard disk
 					synchronized (brokerTable) {
@@ -136,6 +136,7 @@ public class OnlineBrokerHandlerThread extends Thread {
 			}
 
 			/* cleanup when client exits */
+			System.out.println ("Broker thread exiting");
 			fromClient.close();
 			toClient.close();
 			socket.close();

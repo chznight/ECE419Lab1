@@ -41,7 +41,7 @@ public class BrokerExchange {
 		BrokerPacket packetFromServer;
 		packetFromServer = (BrokerPacket) in.readObject();
 		if (packetFromServer.type == BrokerPacket.LOOKUP_REPLY) {
-			System.out.println ("GOT REPLY");
+			System.out.println ("Connected to: " + args[2]);
 			hostname=packetFromServer.locations[0].broker_host;
 			port=packetFromServer.locations[0].broker_port;
 		}else{
@@ -74,7 +74,7 @@ public class BrokerExchange {
 		System.out.print(">");
 		while ((userInput = stdIn.readLine()) != null
 				&& userInput.toLowerCase().indexOf("x") == -1) {
-
+			packetToServer = new BrokerPacket();
 			//BrokerPacket packetToServer = new BrokerPacket();
 			tokens = userInput.split(" ");
 
@@ -146,7 +146,7 @@ public class BrokerExchange {
 		}
 
 		/* tell server that i'm quitting */
-		//BrokerPacket packetToServer = new BrokerPacket();
+		packetToServer = new BrokerPacket();
 		packetToServer.type = BrokerPacket.BROKER_BYE;
 		out.writeObject(packetToServer);
 
