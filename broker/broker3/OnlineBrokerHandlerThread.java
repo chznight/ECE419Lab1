@@ -29,11 +29,25 @@ public class OnlineBrokerHandlerThread extends Thread {
 		int num_of_edits = 0;
 		
 		try {
+			BrokerPacket packetFromLookup=null;
+			BrokerPacket packetToLookup=null;
+			BrokerPacket packetFromBroker=null;
+			BrokerPacket packetToBroker=null;
+			
+			ObjectInputStream fromLookup=null;
+			ObjectOutputStream toLookup=null;
+			ObjectInputStream fromBroker=null;
+			ObjectOutputStream toBroker=null;
+
+			Socket lookupSocket=null;
+			Socket brokerSocket=null;
+
+			/* stream to write back to client */
+			ObjectOutputStream toClient = new ObjectOutputStream(socket.getOutputStream());
+			toClient.flush();
 			/* stream to read from client */
 			ObjectInputStream fromClient = new ObjectInputStream(socket.getInputStream());
 			BrokerPacket packetFromClient;
-			/* stream to write back to client */
-			ObjectOutputStream toClient = new ObjectOutputStream(socket.getOutputStream());
 
 			while (( packetFromClient = (BrokerPacket) fromClient.readObject()) != null) {
 
@@ -56,6 +70,81 @@ public class OnlineBrokerHandlerThread extends Thread {
 				/* process request */
 				
 				if(packetFromClient.type == BrokerPacket.BROKER_REQUEST) {
+					System.out.println("Request");
+					Long quote;
+					synchronized (brokerTable) {
+						quote = brokerTable.get(packetFromClient.symbol.toLowerCase());
+					}
+					packetToClient.symbol = packetFromClient.symbol;
+					if (quote == null) { /*cannot quote here*/
+						System.out.println("Cannot find");
+						packetToLookup=new BrokerPacket();
+						packetToLookup.locations=new BrokerLocation[1];
+						packetToLookup.type=BrokerPacket.LOOKUP_REQUEST; 
+						if(broker_name.equals("nasdaq")){
+							System.out.println("finding tse");
+							packetToLookup.symbol="tse";
+						}else if(broker_name.equals("tse")){
+							System.out.println("finding nasdaq");
+							packetToLookup.symbol="nasdaq";
+						}
+
+						lookupSocket=new Socket(lookup_name, lookup_port);
+						toLookup = new ObjectOutputStream(lookupSocket.getOutputStream());
+						toLookup.flush();
+						fromLookup = new ObjectInputStream(lookupSocket.getInputStream());
+						
+						System.out.println("To");
+						toLookup.writeObject(packetToLookup);
+						System.out.println("From");
+						packetFromLookup = (BrokerPacket) fromLookup.readObject();
+			
+						String a=packetFromLookup.locations[0].broker_host;
+						int b=packetFromLookup.locations[0].broker_port;
+			
+						packetToLookup=new BrokerPacket();
+						packetToLookup.type=BrokerPacket.BROKER_BYE;
+						toLookup.writeObject(packetToLookup);
+						fromLookup.close();
+						toLookup.close();
+						lookupSocket.close();
+
+System.out.println("Lookup: "+packetFromLookup.type+" "+a+" "+b);
+						packetToBroker=new BrokerPacket();
+						packetToBroker.locations=new BrokerLocation[1];
+						packetToBroker.type=BrokerPacket.BROKER_FORWARD; 
+						packetToBroker.symbol=packetFromClient.symbol;
+
+						brokerSocket=new Socket(packetFromLookup.locations[0].broker_host, packetFromLookup.locations[0].broker_port);
+						toBroker = new ObjectOutputStream(brokerSocket.getOutputStream());
+						toBroker.flush();						
+						fromBroker = new ObjectInputStream(brokerSocket.getInputStream());
+						toBroker.writeObject(packetToBroker);
+						packetFromBroker = (BrokerPacket) fromBroker.readObject();						
+System.out.println("Broker: "+packetFromBroker.type+" "+packetFromBroker.quote);
+						if(packetFromBroker.type==BrokerPacket.BROKER_QUOTE){ /*other broker can quote*/
+							packetToClient.type = BrokerPacket.BROKER_QUOTE;
+							packetToClient.quote = packetFromBroker.quote;							
+						}else{ /*other broker fails too*/
+							packetToClient.type = BrokerPacket.BROKER_ERROR;
+							packetToClient.error_code = BrokerPacket.ERROR_INVALID_SYMBOL;
+						}
+						
+						packetToBroker=new BrokerPacket();
+						packetToBroker.type=BrokerPacket.BROKER_BYE;
+						toBroker.writeObject(packetToBroker);
+						fromBroker.close();
+						toBroker.close();
+						brokerSocket.close();
+					} else {
+						packetToClient.type = BrokerPacket.BROKER_QUOTE;
+						packetToClient.quote = quote;
+					}
+					/* send reply back to client */
+					toClient.writeObject(packetToClient);
+					/* wait for next packet */
+					continue;
+				} else if(packetFromClient.type == BrokerPacket.BROKER_FORWARD){ 
 					Long quote;
 					synchronized (brokerTable) {
 						quote = brokerTable.get(packetFromClient.symbol.toLowerCase());
@@ -64,6 +153,7 @@ public class OnlineBrokerHandlerThread extends Thread {
 					if (quote == null) {
 						packetToClient.type = BrokerPacket.BROKER_ERROR;
 						packetToClient.error_code = BrokerPacket.ERROR_INVALID_SYMBOL;
+						
 					} else {
 						packetToClient.type = BrokerPacket.BROKER_QUOTE;
 						packetToClient.quote = quote;

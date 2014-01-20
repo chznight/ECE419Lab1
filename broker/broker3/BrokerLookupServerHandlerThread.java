@@ -14,16 +14,15 @@ public class BrokerLookupServerHandlerThread extends Thread {
 	}
 
 	public void run() {
-
+System.out.println("You are here!");
 		boolean gotByePacket = false;
 		
 		try {
 			/* stream to read from client */
+			ObjectOutputStream toClient = new ObjectOutputStream(socket.getOutputStream());
+			toClient.flush();
 			ObjectInputStream fromClient = new ObjectInputStream(socket.getInputStream());
 			BrokerPacket packetFromClient;
-			
-			/* stream to write back to client */
-			ObjectOutputStream toClient = new ObjectOutputStream(socket.getOutputStream());
 			
 			while (( packetFromClient = (BrokerPacket) fromClient.readObject()) != null) {
 				System.out.println("I got "+packetFromClient.type+" from client");
@@ -63,7 +62,7 @@ public class BrokerLookupServerHandlerThread extends Thread {
 				
 				/* If you want to request lookup */
 				if(packetFromClient.type == BrokerPacket.LOOKUP_REQUEST) {
-					//System.out.println("You are in request");
+					System.out.println("You are in request");
 					for(int i=0;i<2;i++){
 						if(BrokerLookupTable[i].broker_name.equals(packetFromClient.symbol)){ /*if there is a match*/
 							packetToClient.locations[0]=BrokerLookupTable[i].broker_location; /*tell client the location*/

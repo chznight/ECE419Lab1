@@ -31,7 +31,7 @@ public class BrokerClient {
 		String userInput;
 		String[] tokens;
 		System.out.println("Enter queries or x for exit: ");
-		System.out.print(">");
+		System.out.print("> ");
 		while ((userInput = stdIn.readLine()) != null
 				&& userInput.toLowerCase().indexOf("x") == -1) {
 			/* make a new request packet */
@@ -49,7 +49,7 @@ public class BrokerClient {
 						BrokerSocket.close();
 						connected_to_broker = false;
 					}
-					if (LookupSocket != null) {
+					/*if (LookupSocket != null) {
 						packetToServer = new BrokerPacket();
 						packetToServer.type = BrokerPacket.BROKER_BYE;
 						lookup_out.writeObject(packetToServer);
@@ -58,7 +58,7 @@ public class BrokerClient {
 						lookup_in.close();
 						LookupSocket.close();
 						LookupSocket = null;
-					}
+					}*/
 					LookupSocket = new Socket(hostname, port);
 					lookup_out = new ObjectOutputStream(LookupSocket.getOutputStream());
 					lookup_in = new ObjectInputStream(LookupSocket.getInputStream());
@@ -96,12 +96,13 @@ public class BrokerClient {
 				lookup_out.close();
 				lookup_in.close();
 				LookupSocket.close();
-				if (connected_to_broker == true) {
+				LookupSocket=null;
+				/*if (connected_to_broker == true) {
 					out.close();
 					in.close();
 					BrokerSocket.close();
 					connected_to_broker = false;
-				}
+				}*/
 				BrokerSocket = new Socket(packetFromServer.locations[0].broker_host, packetFromServer.locations[0].broker_port);
 				out = new ObjectOutputStream(BrokerSocket.getOutputStream());
 				in = new ObjectInputStream(BrokerSocket.getInputStream());
@@ -119,7 +120,7 @@ public class BrokerClient {
 			}
 
 			/* re-print console prompt */
-			System.out.print(">");
+			System.out.print("> ");
 		}
 
 		/* tell server that i'm quitting */

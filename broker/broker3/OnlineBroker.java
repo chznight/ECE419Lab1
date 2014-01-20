@@ -63,6 +63,12 @@ public class OnlineBroker {
             } else {
                 System.out.println ("Register successful");
             }
+	packetToServer=new BrokerPacket();
+	packetToServer.type=BrokerPacket.BROKER_BYE;
+	lookup_out.writeObject(packetToServer);
+	lookup_in.close();
+	lookup_out.close();
+	lookupSocket.close();
 
         try {
             serverSocket = new ServerSocket(Integer.parseInt(args[2]));
