@@ -88,6 +88,9 @@ public class BrokerClient {
 				LookupSocket.close();
 				LookupSocket=null;
 				if (connected_to_broker == true) {
+					packetToServer = new BrokerPacket();
+					packetToServer.type = BrokerPacket.BROKER_BYE;
+					out.writeObject(packetToServer);
 					out.close();
 					in.close();
 					BrokerSocket.close();
