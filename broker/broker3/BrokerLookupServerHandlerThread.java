@@ -76,7 +76,7 @@ System.out.println("You are here!");
 					if(flag==true){
 						continue;
 					}else{
-						packetToClient.error_code=BrokerPacket.ERROR_INVALID_SYMBOL;
+						packetToClient.error_code=BrokerPacket.ERROR_INVALID_EXCHANGE;
 						packetToClient.type = BrokerPacket.BROKER_ERROR;					
 						toClient.writeObject(packetToClient);
 						continue;

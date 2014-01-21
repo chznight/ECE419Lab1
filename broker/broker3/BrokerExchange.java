@@ -44,9 +44,16 @@ public class BrokerExchange {
 			System.out.println ("Connected to: " + args[2]);
 			hostname=packetFromServer.locations[0].broker_host;
 			port=packetFromServer.locations[0].broker_port;
-		}else{
-			System.out.println ("ERROR PACKET NOT RECOGNIZED");
-			errorOccurred=true;
+		} else if (packetFromServer.type == BrokerPacket.BROKER_ERROR){
+			if (packetFromServer.error_code == BrokerPacket.ERROR_INVALID_EXCHANGE) {
+				System.out.println ("Error: invlid exchange, naming server might not be not up");
+			} else {
+				System.out.println ("Error: code: " + packetFromServer.error_code);
+			}
+			errorOccurred = true;
+		} else {
+			System.out.println ("Error: packet not recognized");
+			errorOccurred = true;
 		}
 		
 		/*tear down naming server*/

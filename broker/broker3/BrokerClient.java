@@ -40,7 +40,7 @@ public class BrokerClient {
 			tokens = userInput.split(" ");
 			if (tokens[0].toLowerCase().equals ("local")) {
 				try {
-					if (connected_to_broker == true) {
+					/*if (connected_to_broker == true) {
 						packetToServer = new BrokerPacket();
 						packetToServer.type = BrokerPacket.BROKER_BYE;
 						out.writeObject(packetToServer);
@@ -48,16 +48,6 @@ public class BrokerClient {
 						in.close();
 						BrokerSocket.close();
 						connected_to_broker = false;
-					}
-					/*if (LookupSocket != null) {
-						packetToServer = new BrokerPacket();
-						packetToServer.type = BrokerPacket.BROKER_BYE;
-						lookup_out.writeObject(packetToServer);
-						//lookup_in.readObject();
-						lookup_out.close();
-						lookup_in.close();
-						LookupSocket.close();
-						LookupSocket = null;
 					}*/
 					LookupSocket = new Socket(hostname, port);
 					lookup_out = new ObjectOutputStream(LookupSocket.getOutputStream());
@@ -97,12 +87,12 @@ public class BrokerClient {
 				lookup_in.close();
 				LookupSocket.close();
 				LookupSocket=null;
-				/*if (connected_to_broker == true) {
+				if (connected_to_broker == true) {
 					out.close();
 					in.close();
 					BrokerSocket.close();
 					connected_to_broker = false;
-				}*/
+				}
 				BrokerSocket = new Socket(packetFromServer.locations[0].broker_host, packetFromServer.locations[0].broker_port);
 				out = new ObjectOutputStream(BrokerSocket.getOutputStream());
 				in = new ObjectInputStream(BrokerSocket.getInputStream());
@@ -111,21 +101,19 @@ public class BrokerClient {
 			} else if (packetFromServer.type == BrokerPacket.BROKER_ERROR) {
 				if (packetFromServer.error_code == BrokerPacket.ERROR_INVALID_SYMBOL) {
 					System.out.println (packetFromServer.symbol + " invalid");
-					if(LookupSocket!=null){
-						System.out.println ("You tried to local a server that doesn't exist!");
+				}
+				if (packetFromServer.error_code == BrokerPacket.ERROR_INVALID_EXCHANGE) {
+					System.out.println (packetFromServer.symbol + " invalid, can not find broker");
+					if (LookupSocket != null) {
 						packetToServer = new BrokerPacket();
 						packetToServer.type = BrokerPacket.BROKER_BYE;
 						lookup_out.writeObject(packetToServer);
-						//lookup_in.readObject();
+						
 						lookup_out.close();
 						lookup_in.close();
 						LookupSocket.close();
 						LookupSocket = null;
-						connected_to_broker=false;
 					}
-				}
-				if (packetFromServer.error_code == BrokerPacket.ERROR_INVALID_EXCHANGE) {
-					System.out.println (packetFromServer.symbol + " invalid, can not find broker");
 				}
 			} else {
 				System.out.println ("ERROR: PACKET NOT RECOGNIZED");
