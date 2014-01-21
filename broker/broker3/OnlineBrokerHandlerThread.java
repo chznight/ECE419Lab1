@@ -94,14 +94,25 @@ public class OnlineBrokerHandlerThread extends Thread {
 						toLookup.flush();
 						fromLookup = new ObjectInputStream(lookupSocket.getInputStream());
 						
-						System.out.println("To");
 						toLookup.writeObject(packetToLookup);
-						System.out.println("From");
 						packetFromLookup = (BrokerPacket) fromLookup.readObject();
 			
-						String a=packetFromLookup.locations[0].broker_host;
-						int b=packetFromLookup.locations[0].broker_port;
-			
+						if(packetFromLookup.type==BrokerPacket.BROKER_ERROR){
+							packetToLookup=new BrokerPacket();
+							packetToLookup.type=BrokerPacket.BROKER_BYE;
+							toLookup.writeObject(packetToLookup);
+							fromLookup.close();
+							toLookup.close();
+							lookupSocket.close();
+							packetToClient.type = BrokerPacket.BROKER_ERROR;
+							packetToClient.error_code = BrokerPacket.ERROR_INVALID_SYMBOL;
+							toClient.writeObject(packetToClient);
+							continue;
+						}else{
+							String a=packetFromLookup.locations[0].broker_host;
+							int b=packetFromLookup.locations[0].broker_port;
+						}
+	
 						packetToLookup=new BrokerPacket();
 						packetToLookup.type=BrokerPacket.BROKER_BYE;
 						toLookup.writeObject(packetToLookup);
@@ -109,7 +120,6 @@ public class OnlineBrokerHandlerThread extends Thread {
 						toLookup.close();
 						lookupSocket.close();
 
-System.out.println("Lookup: "+packetFromLookup.type+" "+a+" "+b);
 						packetToBroker=new BrokerPacket();
 						packetToBroker.locations=new BrokerLocation[1];
 						packetToBroker.type=BrokerPacket.BROKER_FORWARD; 
@@ -121,7 +131,7 @@ System.out.println("Lookup: "+packetFromLookup.type+" "+a+" "+b);
 						fromBroker = new ObjectInputStream(brokerSocket.getInputStream());
 						toBroker.writeObject(packetToBroker);
 						packetFromBroker = (BrokerPacket) fromBroker.readObject();						
-System.out.println("Broker: "+packetFromBroker.type+" "+packetFromBroker.quote);
+
 						if(packetFromBroker.type==BrokerPacket.BROKER_QUOTE){ /*other broker can quote*/
 							packetToClient.type = BrokerPacket.BROKER_QUOTE;
 							packetToClient.quote = packetFromBroker.quote;							

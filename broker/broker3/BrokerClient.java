@@ -111,6 +111,18 @@ public class BrokerClient {
 			} else if (packetFromServer.type == BrokerPacket.BROKER_ERROR) {
 				if (packetFromServer.error_code == BrokerPacket.ERROR_INVALID_SYMBOL) {
 					System.out.println (packetFromServer.symbol + " invalid");
+					if(LookupSocket!=null){
+						System.out.println ("You tried to local a server that doesn't exist!");
+						packetToServer = new BrokerPacket();
+						packetToServer.type = BrokerPacket.BROKER_BYE;
+						lookup_out.writeObject(packetToServer);
+						//lookup_in.readObject();
+						lookup_out.close();
+						lookup_in.close();
+						LookupSocket.close();
+						LookupSocket = null;
+						connected_to_broker=false;
+					}
 				}
 				if (packetFromServer.error_code == BrokerPacket.ERROR_INVALID_EXCHANGE) {
 					System.out.println (packetFromServer.symbol + " invalid, can not find broker");
