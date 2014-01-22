@@ -14,7 +14,7 @@ public class BrokerLookupServerHandlerThread extends Thread {
 	}
 
 	public void run() {
-System.out.println("You are here!");
+
 		boolean gotByePacket = false;
 		
 		try {
@@ -25,7 +25,7 @@ System.out.println("You are here!");
 			BrokerPacket packetFromClient;
 			
 			while (( packetFromClient = (BrokerPacket) fromClient.readObject()) != null) {
-				System.out.println("I got "+packetFromClient.type+" from client");
+				//System.out.println("I got "+packetFromClient.type+" from client");
 				/* create a packet to send reply back to client */
 				BrokerPacket packetToClient = new BrokerPacket();
 				packetToClient.locations=new BrokerLocation[1];
@@ -62,14 +62,13 @@ System.out.println("You are here!");
 				
 				/* If you want to request lookup */
 				if(packetFromClient.type == BrokerPacket.LOOKUP_REQUEST) {
-					System.out.println("You are in request");
+					//System.out.println("You are in request");
 					for(int i=0;i<2;i++){
 						if(BrokerLookupTable[i].broker_name.equals(packetFromClient.symbol)){ /*if there is a match*/
 							packetToClient.locations[0]=BrokerLookupTable[i].broker_location; /*tell client the location*/
 							packetToClient.type = BrokerPacket.LOOKUP_REPLY;
 							toClient.writeObject(packetToClient);
 							flag=true;
-							//System.out.println("flag turned true");
 							break;
 						}
 					}
@@ -87,7 +86,7 @@ System.out.println("You are here!");
 				if (packetFromClient.type == BrokerPacket.BROKER_BYE || packetFromClient.type == BrokerPacket.BROKER_NULL) {
 					//packetToClient.type = BrokerPacket.BROKER_NULL;
 					//toClient.writeObject(packetToClient);
-					System.out.println ("Naming server thread exiting");
+					//System.out.println ("Naming server thread exiting");
 					gotByePacket = true;
 					break;
 				}

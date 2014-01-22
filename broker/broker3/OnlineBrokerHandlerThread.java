@@ -70,22 +70,22 @@ public class OnlineBrokerHandlerThread extends Thread {
 				/* process request */
 				
 				if(packetFromClient.type == BrokerPacket.BROKER_REQUEST) {
-					System.out.println("Request");
+					//System.out.println("Request");
 					Long quote;
 					synchronized (brokerTable) {
 						quote = brokerTable.get(packetFromClient.symbol.toLowerCase());
 					}
 					packetToClient.symbol = packetFromClient.symbol;
 					if (quote == null) { /*cannot quote here*/
-						System.out.println("Cannot find");
+						//System.out.println("Cannot find");
 						packetToLookup=new BrokerPacket();
 						packetToLookup.locations=new BrokerLocation[1];
 						packetToLookup.type=BrokerPacket.LOOKUP_REQUEST; 
 						if(broker_name.equals("nasdaq")){
-							System.out.println("finding tse");
+							//System.out.println("finding tse");
 							packetToLookup.symbol="tse";
 						}else if(broker_name.equals("tse")){
-							System.out.println("finding nasdaq");
+							//System.out.println("finding nasdaq");
 							packetToLookup.symbol="nasdaq";
 						}
 
@@ -236,7 +236,7 @@ public class OnlineBrokerHandlerThread extends Thread {
 			}
 
 			/* cleanup when client exits */
-			System.out.println ("Broker thread exiting");
+			//System.out.println ("Broker thread exiting");
 			fromClient.close();
 			toClient.close();
 			socket.close();
