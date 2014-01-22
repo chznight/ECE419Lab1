@@ -7,7 +7,7 @@ public class OnlineBrokerHandlerThread extends Thread {
 
 	HashMap<String, Long> BrokerTable;
 	public OnlineBrokerHandlerThread(Socket socket, HashMap<String, Long> BrokerTable_) {
-		super("EchoServerHandlerThread");
+		super("OnlineBrokerHandlerThread");
 		this.socket = socket;
 		BrokerTable = BrokerTable_;
 		System.out.println("Created new Thread to handle client");
